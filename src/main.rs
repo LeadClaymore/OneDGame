@@ -160,27 +160,35 @@ fn main() {
     //setting up the maze
     generate_maze(&mut maze, 0, 0, MAZESIZE_X - 1, MAZESIZE_Y - 1, &mut rng);
 
-    //display for test
-    for ii in 0..MAZESIZE_X as usize {
-        println!();
-        for jj in 0..MAZESIZE_Y as usize {
-            if maze[ii][jj].unexplored() { print!("#"); }
-            else { print!("*"); }
-        }
-    }
-
-    // while !rl.window_should_close() {
-    //     let dt = rl.get_frame_time();
-
-    //     //Draw
-    //     //start
-    //     let mut d = rl.begin_drawing(&thread);
-    //     d.clear_background(Color::BLACK);
-
-    //     //ongoing
-
-    //     d.draw_fps(10, 10);
+    //display for debug
+    // for ii in 0..MAZESIZE_X as usize {
+    //     println!();
+    //     for jj in 0..MAZESIZE_Y as usize {
+    //         if maze[ii][jj].unexplored() { print!("#"); }
+    //         else { print!("*"); }
+    //     }
     // }
+
+    // getting the size of each rectangle
+    let (subrec_x, subrec_y, rec_x, rec_y) = (
+        SCREEN_WIDTH / MAZESIZE_X as f32,
+        SCREEN_HEIGHT / MAZESIZE_Y as f32,
+        SCREEN_WIDTH / (MAZESIZE_X as f32 * 3.0),
+        SCREEN_HEIGHT / (MAZESIZE_Y as f32 * 3.0),
+    );
+
+    while !rl.window_should_close() {
+        let dt = rl.get_frame_time();
+
+        //Draw
+        //start
+        let mut d = rl.begin_drawing(&thread);
+        d.clear_background(Color::BLACK);
+
+        //ongoing
+
+        d.draw_fps(10, 10);
+    }
 }
 
 fn generate_maze(maze: &mut Vec<Vec<MazePiece>>, x: u32, y: u32, endx: u32, endy: u32, rng: &mut rand::prelude::ThreadRng) {
