@@ -10,35 +10,28 @@ const TARGET_FPS: u32 = 240;
 const MAZESIZE_X: u32 = 10;
 const MAZESIZE_Y: u32 = 10;
 
-// #[derive(Default, Clone)]
-// struct Node {
-//     left: Option<Box<Node>>,
-//     up: Option<Box<Node>>,
-//     right: Option<Box<Node>>,
-//     down: Option<Box<Node>>,
-//     piece: MazePiece,
-// }
-
 /// This represents each square of the maze.
 /// Clockwise from the left edge
 /// B = blocked,
 /// C = cleared.
 /// for example BCCC = Only Left Blocked
-    // ERROR,
-    // BCCC,
-    // CBCC,
-    // CCBC,
-    // CCCB,
-    // BBCC,
-    // CBBC,
-    // CCBB,
-    // BCCB,
-    // BCBC,
-    // CBCB,
-    // BBBC,
-    // CBBB,
-    // BCBB,
-    // BBCB,
+enum Configuration {
+    ERROR,
+    BCCC,
+    CBCC,
+    CCBC,
+    CCCB,
+    BBCC,
+    CBBC,
+    CCBB,
+    BCCB,
+    BCBC,
+    CBCB,
+    BBBC,
+    CBBB,
+    BCBB,
+    BBCB,
+}
 
 /// This stores what the coords and 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -52,14 +45,14 @@ struct MazePiece {
 }
 
 impl MazePiece {
-    fn new(new_x: u32, new_y: u32) -> Self {
+    fn new(new_x: u32, new_y: u32, new_l: bool, new_u: bool, new_r: bool, new_d: bool) -> Self {
         MazePiece {
             x: new_x,
             y: new_y,
-            l: false,
-            u: false,
-            r: false,
-            d: false, 
+            l: new_l,
+            u: new_u,
+            r: new_r,
+            d: new_d, 
         }
     }
 
@@ -100,6 +93,48 @@ impl MazePiece {
             _ => panic!("Wrong opposit dirrection sent"),
         }
     }
+
+    /// returns what enum would match this piece
+    fn get_configuration(&self) -> Configuration {
+        match (self.l, self.u, self.r, self.d) {
+            (false, true, true, true)  => Configuration::BCCC,
+            (true, false, true, true) => Configuration::CBCC,
+            (true, true, false, true) => Configuration::CCBC,
+            (true, true, true, false) => Configuration::CCCB,
+            (false, false, true, true) => Configuration::BBCC,
+            (true, false, false, true) => Configuration::CBBC,
+            (true, true, false, false) => Configuration::CCBB,
+            (false, true, true, false) => Configuration::BCCB,
+            (false, true, false, true) => Configuration::BCBC,
+            (true, false, true, false) => Configuration::CBCB,
+            (false, false, false, true) => Configuration::BBBC,
+            (true, false, false, false) => Configuration::CBBB,
+            (false, true, false, false) => Configuration::BCBB,
+            (false, false, true, false) => Configuration::BBCB,
+            _ => Configuration::ERROR,
+        }
+    }
+
+    /// returns what color would match this piece
+    fn get_color(&self) -> Color {
+        match (self.l, self.u, self.r, self.d) {
+            (false, true, true, true)  => Color::WHITE,
+            (true, false, true, true) => Color::WHITE,
+            (true, true, false, true) => Color::WHITE,
+            (true, true, true, false) => Color::WHITE,
+            (false, false, true, true) => Color::WHITE,
+            (true, false, false, true) => Color::WHITE,
+            (true, true, false, false) => Color::WHITE,
+            (false, true, true, false) => Color::WHITE,
+            (false, true, false, true) => Color::WHITE,
+            (true, false, true, false) => Color::WHITE,
+            (false, false, false, true) => Color::WHITE,
+            (true, false, false, false) => Color::WHITE,
+            (false, true, false, false) => Color::WHITE,
+            (false, false, true, false) => Color::WHITE,
+            _ => Color::WHITE,
+        }
+    }
 }
 
 fn main() {
@@ -116,65 +151,83 @@ fn main() {
         maze.push(Vec::new());
         for jj in 0..MAZESIZE_Y as usize {
             println!("[{ii}][{jj}]");
-            maze[ii].push(MazePiece::new(ii as u32, jj as u32));
+            maze[ii].push(MazePiece::new(ii as u32, jj as u32, false, false, false, false));
         }
     }
 
     //for the random path
     let mut rng = rand::thread_rng();
+    //setting up the maze
     generate_maze(&mut maze, 0, 0, MAZESIZE_X - 1, MAZESIZE_Y - 1, &mut rng);
 
+    //display for test
     for ii in 0..MAZESIZE_X as usize {
+        println!();
         for jj in 0..MAZESIZE_Y as usize {
-            if maze[ii][jj].
-            println!("");
+            if maze[ii][jj].unexplored() { print!("#"); }
+            else { print!("*"); }
         }
     }
 
-    while !rl.window_should_close() {
-        let dt = rl.get_frame_time();
+    // while !rl.window_should_close() {
+    //     let dt = rl.get_frame_time();
 
-        //Draw
-        //start
-        let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::BLACK);
+    //     //Draw
+    //     //start
+    //     let mut d = rl.begin_drawing(&thread);
+    //     d.clear_background(Color::BLACK);
 
-        //ongoing
+    //     //ongoing
 
-        d.draw_fps(10, 10);
-    }
+    //     d.draw_fps(10, 10);
+    // }
 }
 
 fn generate_maze(maze: &mut Vec<Vec<MazePiece>>, x: u32, y: u32, endx: u32, endy: u32, rng: &mut rand::prelude::ThreadRng) {
     // if bad cords are sent, then it just returns (might do an option later)
-    if x < 0 || x > MAZESIZE_X || y < 0 || y > MAZESIZE_Y { return }; 
-    //let (mut l , mut u, mut r, mut d, mut num) = (false, false, false, false, 0);
+    if x > MAZESIZE_X || y > MAZESIZE_Y { return }; 
 
     // get current possible routes
     let mut possible_route: Vec<(u32, u32, u8)> = Vec::new();
-    if x > 0 && maze[(x - 1) as usize][y as usize].unexplored() { possible_route.push((x - 1, y, 0)) };
-    if y > 0 && maze[x as usize][(y - 1) as usize].unexplored() { possible_route.push((x, y - 1, 1)) };
-    if x > MAZESIZE_X - 1 && maze[(x + 1) as usize][y as usize].unexplored() { possible_route.push((x + 1, y, 2)) };
-    if y > MAZESIZE_Y - 1 && maze[x as usize][(y + 1) as usize].unexplored() { possible_route.push((x, y + 1, 3)) };
+    if x != 0 && maze[(x - 1) as usize][y as usize].unexplored() { possible_route.push((x - 1, y, 0)) };
+    if y != 0 && maze[x as usize][(y - 1) as usize].unexplored() { possible_route.push((x, y - 1, 1)) };
+    if x != (MAZESIZE_X - 1) && maze[(x + 1) as usize][y as usize].unexplored() { possible_route.push((x + 1, y, 2)) };
+    if y != (MAZESIZE_Y - 1) && maze[x as usize][(y + 1) as usize].unexplored() { possible_route.push((x, y + 1, 3)) };
 
     // select route
     if possible_route.len() > 0 {
         let (x2, y2, dir) = possible_route[rng.gen_range(0..possible_route.len())];
         maze[x2 as usize][y2 as usize].set_oposite_opening(dir);
         maze[x as usize][y as usize].set_opening(dir);
+        generate_maze(maze, x2, y2, endx, endy, rng);
+        generate_maze(maze, x, y, endx, endy, rng);
+        generate_maze(maze, x, y, endx, endy, rng);
     }
     return;
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-/*
-TODO:
-Change Maze piece into a struct with bool for each dirrection //DONE
-default of all false //DONE
-make current maze piece into something to translate shape to color, IDK just comment it out for now //DONE
-Next using the current generate maze:
-    Change the 'get current possible routes' to 1: use the new struct, 2: pass something on to signify that route (some ref to the node)
-    Change 'select route' to use this
-    Add a update paths to change blocked / unblocked paths
-    Think of some way to do regeneration of new paths
+    #[test]
+    fn test_unexplored() {
+        let MP = MazePiece::new(0, 0, false, false, false, false);
+        assert_eq!(MP.unexplored(), true);
+        let MP2 = MazePiece::new(0, 0, true, true, true, true);
+        assert_eq!(MP2.unexplored(), false);
+        let MP3 = MazePiece::new(0, 0, true, false, false, false);
+        assert_eq!(MP3.unexplored(), false);
+        // let MP4 = MazePiece::new(0, 0, false, true, false, false);
+        // assert_eq!(MP4.unexplored(), false);
+        // let MP5 = MazePiece::new(0, 0, false, false, true, false);
+        // assert_eq!(MP5.unexplored(), false);
+        // let MP6 = MazePiece::new(0, 0, false, false, false, true);
+        // assert_eq!(MP6.unexplored(), false);
+    }
+}
+
+/* 
+    you lazy bastard you just called the funtion 2 more times rather then figuring out a good way to only do it again if you can
+    id say have it return a bool
 */
