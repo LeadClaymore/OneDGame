@@ -122,7 +122,15 @@ fn main() {
 
     //for the random path
     let mut rng = rand::thread_rng();
-    generate_maze(&maze, 0, 0, MAZESIZE_X - 1, MAZESIZE_Y - 1, &mut rng);
+    generate_maze(&mut maze, 0, 0, MAZESIZE_X - 1, MAZESIZE_Y - 1, &mut rng);
+
+    for ii in 0..MAZESIZE_X as usize {
+        for jj in 0..MAZESIZE_Y as usize {
+            if maze[ii][jj].
+            println!("");
+        }
+    }
+
     while !rl.window_should_close() {
         let dt = rl.get_frame_time();
 
@@ -137,22 +145,23 @@ fn main() {
     }
 }
 
-fn generate_maze(maze: &Vec<Vec<MazePiece>>, x: u32, y: u32, endx: u32, endy: u32, rng: &mut rand::prelude::ThreadRng) {
+fn generate_maze(maze: &mut Vec<Vec<MazePiece>>, x: u32, y: u32, endx: u32, endy: u32, rng: &mut rand::prelude::ThreadRng) {
     // if bad cords are sent, then it just returns (might do an option later)
     if x < 0 || x > MAZESIZE_X || y < 0 || y > MAZESIZE_Y { return }; 
     //let (mut l , mut u, mut r, mut d, mut num) = (false, false, false, false, 0);
 
     // get current possible routes
-    let mut possible_route: Vec<(u32, u32)> = Vec::new();
-    if x > 0 && maze[(x - 1) as usize][y as usize].unexplored() { possible_route.push((x - 1, y, )) };
-    if y > 0 && maze[x as usize][(y - 1) as usize].unexplored() { possible_route.push((x, y - 1)) };
-    if x > MAZESIZE_X - 1 && maze[(x + 1) as usize][y as usize].unexplored() { possible_route.push((x + 1, y)) };
-    if y > MAZESIZE_Y - 1 && maze[x as usize][(y + 1) as usize].unexplored() { possible_route.push((x, y + 1)) };
+    let mut possible_route: Vec<(u32, u32, u8)> = Vec::new();
+    if x > 0 && maze[(x - 1) as usize][y as usize].unexplored() { possible_route.push((x - 1, y, 0)) };
+    if y > 0 && maze[x as usize][(y - 1) as usize].unexplored() { possible_route.push((x, y - 1, 1)) };
+    if x > MAZESIZE_X - 1 && maze[(x + 1) as usize][y as usize].unexplored() { possible_route.push((x + 1, y, 2)) };
+    if y > MAZESIZE_Y - 1 && maze[x as usize][(y + 1) as usize].unexplored() { possible_route.push((x, y + 1, 3)) };
 
     // select route
     if possible_route.len() > 0 {
-        let (x2, y2) = possible_route[rng.gen_range(0..possible_route.len())];
-        maze[x2 as usize][y2 as usize].set_oposite_opening();
+        let (x2, y2, dir) = possible_route[rng.gen_range(0..possible_route.len())];
+        maze[x2 as usize][y2 as usize].set_oposite_opening(dir);
+        maze[x as usize][y as usize].set_opening(dir);
     }
     return;
 }
