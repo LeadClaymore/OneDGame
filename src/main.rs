@@ -4,11 +4,11 @@ use raylib::consts::KeyboardKey::*;
 use raylib::consts::MouseButton::*;
 //use raylib::consts::MouseCursor::*;
 
-const SCREEN_WIDTH: f32 = 640.0;
-const SCREEN_HEIGHT: f32 = 480.0;
-const TARGET_FPS: u32 = 240;
-const MAZESIZE_X: u32 = 10;
-const MAZESIZE_Y: u32 = 10;
+const SCREEN_WIDTH: f32 = 1000.0;
+const SCREEN_HEIGHT: f32 = 1000.0;
+const TARGET_FPS: u32 = 30;
+const MAZESIZE_X: u32 = 100;
+const MAZESIZE_Y: u32 = 100;
 
 /// This represents each square of the maze.
 /// Clockwise from the left edge
@@ -33,14 +33,21 @@ enum Configuration {
     BBCB,
 }
 
-/// This stores what the coords and 
+/// This stores what the coords and the left (l), up (u), right (r), and down (d).
+/// false is blocked, and true is clear
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct MazePiece {
+    /// x cord
     x: u32,
+    /// y cord
     y: u32,
+    /// if left is clear
     l: bool,
+    /// if up is clear
     u: bool,
+    /// if right is clear
     r: bool,
+    /// if down is clear
     d: bool,
 }
 
@@ -118,21 +125,22 @@ impl MazePiece {
     /// returns what color would match this piece
     fn get_color(&self) -> (Color, Color, Color, Color) {
         match (self.l, self.u, self.r, self.d) {
-            (false, true, true, true)  => (Color::BLACK, Color::WHITE, Color::WHITE, Color::WHITE),
-            (true, false, true, true) => (Color::WHITE, Color::BLACK, Color::WHITE, Color::WHITE),
-            (true, true, false, true) => (Color::WHITE, Color::WHITE, Color::BLACK, Color::WHITE),
-            (true, true, true, false) => (Color::WHITE, Color::WHITE, Color::WHITE, Color::BLACK),
-            (false, false, true, true) => (Color::BLACK, Color::BLACK, Color::WHITE, Color::WHITE),
-            (true, false, false, true) => (Color::WHITE, Color::BLACK, Color::BLACK, Color::WHITE),
-            (true, true, false, false) => (Color::WHITE, Color::WHITE, Color::BLACK, Color::BLACK),
-            (false, true, true, false) => (Color::BLACK, Color::WHITE, Color::WHITE, Color::BLACK),
-            (false, true, false, true) => (Color::BLACK, Color::WHITE, Color::BLACK, Color::WHITE),
-            (true, false, true, false) => (Color::WHITE, Color::BLACK, Color::WHITE, Color::BLACK),
+            (true, true, true, true)    => (Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE),
+            (false, true, true, true)   => (Color::BLACK, Color::WHITE, Color::WHITE, Color::WHITE),
+            (true, false, true, true)   => (Color::WHITE, Color::BLACK, Color::WHITE, Color::WHITE),
+            (true, true, false, true)   => (Color::WHITE, Color::WHITE, Color::BLACK, Color::WHITE),
+            (true, true, true, false)   => (Color::WHITE, Color::WHITE, Color::WHITE, Color::BLACK),
+            (false, false, true, true)  => (Color::BLACK, Color::BLACK, Color::WHITE, Color::WHITE),
+            (true, false, false, true)  => (Color::WHITE, Color::BLACK, Color::BLACK, Color::WHITE),
+            (true, true, false, false)  => (Color::WHITE, Color::WHITE, Color::BLACK, Color::BLACK),
+            (false, true, true, false)  => (Color::BLACK, Color::WHITE, Color::WHITE, Color::BLACK),
+            (false, true, false, true)  => (Color::BLACK, Color::WHITE, Color::BLACK, Color::WHITE),
+            (true, false, true, false)  => (Color::WHITE, Color::BLACK, Color::WHITE, Color::BLACK),
             (false, false, false, true) => (Color::BLACK, Color::BLACK, Color::BLACK, Color::WHITE),
             (true, false, false, false) => (Color::WHITE, Color::BLACK, Color::BLACK, Color::BLACK),
             (false, true, false, false) => (Color::BLACK, Color::WHITE, Color::BLACK, Color::BLACK),
             (false, false, true, false) => (Color::BLACK, Color::BLACK, Color::WHITE, Color::BLACK),
-            _ => (Color::BLACK, Color::BLACK, Color::BLACK, Color::BLACK),
+            _                           => (Color::BLACK, Color::BLACK, Color::BLACK, Color::BLACK),
         }
     }
 }
@@ -159,15 +167,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     //setting up the maze
     generate_maze(&mut maze, 0, 0, MAZESIZE_X - 1, MAZESIZE_Y - 1, &mut rng);
-
-    //display for debug
-    // for ii in 0..MAZESIZE_X as usize {
-    //     println!();
-    //     for jj in 0..MAZESIZE_Y as usize {
-    //         if maze[ii][jj].unexplored() { print!("#"); }
-    //         else { print!("*"); }
-    //     }
-    // }
+    //TODO this is where the program runs out of mem, make it more efficent
 
     // getting the size of each rectangle
     let (rec_x, rec_y, subrec_x, subrec_y) = (
@@ -176,15 +176,10 @@ fn main() {
         SCREEN_WIDTH / (MAZESIZE_X as f32 * 3.0),
         SCREEN_HEIGHT / (MAZESIZE_Y as f32 * 3.0),
     );
-    // TODO use this to create the rectangles,
-    // the subrec_*, is the 1/3 of the size
-    // * # *
-    // # # * = CCBB
-    // * * *
-    // each * and # is a sub pixel
 
+    //drawing the window
     while !rl.window_should_close() {
-        let dt = rl.get_frame_time();
+        //let dt = rl.get_frame_time();
 
         //Draw
         //start
@@ -193,7 +188,10 @@ fn main() {
 
         //ongoing
 
-        //draw the rectangles
+        // this draws the rectangles
+        // TODO fix the weird white lines
+        // I think its caused by float to int conversion
+        // Potential fix 1: round down not up or vice versa
         for ii in 0..MAZESIZE_X as usize {
             for jj in 0..MAZESIZE_Y as usize {
                 // top left
@@ -228,6 +226,7 @@ fn main() {
                     subrec_y as i32, 
                     Color::BLACK);
                 
+                //gets the color needed
                 let (color_left, color_up, color_right, color_down) = maze[ii][jj].get_color();
                 
                 // left
@@ -314,6 +313,10 @@ mod tests {
 
 /* 
     Works but need to change later:
-    you lazy bastard you just called the funtion 2 more times rather then figuring out a good way to only do it again if you can
-    id say have it return a bool
+    TODO remove un-needed code
+    un-used enum
+    TODO you lazy bastard you just called the funtion 2 more times rather then figuring out a good way to only do it again if you can
+    PotFix 1: have it return a bool
+    PotFix 2: split the determining routes and selecting to 2 diffrent functions
+    TODO try to make the code run faster / not run out of mem, IDK how
 */
