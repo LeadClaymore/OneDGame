@@ -116,23 +116,23 @@ impl MazePiece {
     }
 
     /// returns what color would match this piece
-    fn get_color(&self) -> Color {
+    fn get_color(&self) -> (Color, Color, Color, Color) {
         match (self.l, self.u, self.r, self.d) {
-            (false, true, true, true)  => Color::WHITE,
-            (true, false, true, true) => Color::WHITE,
-            (true, true, false, true) => Color::WHITE,
-            (true, true, true, false) => Color::WHITE,
-            (false, false, true, true) => Color::WHITE,
-            (true, false, false, true) => Color::WHITE,
-            (true, true, false, false) => Color::WHITE,
-            (false, true, true, false) => Color::WHITE,
-            (false, true, false, true) => Color::WHITE,
-            (true, false, true, false) => Color::WHITE,
-            (false, false, false, true) => Color::WHITE,
-            (true, false, false, false) => Color::WHITE,
-            (false, true, false, false) => Color::WHITE,
-            (false, false, true, false) => Color::WHITE,
-            _ => Color::WHITE,
+            (false, true, true, true)  => (Color::BLACK, Color::WHITE, Color::WHITE, Color::WHITE),
+            (true, false, true, true) => (Color::WHITE, Color::BLACK, Color::WHITE, Color::WHITE),
+            (true, true, false, true) => (Color::WHITE, Color::WHITE, Color::BLACK, Color::WHITE),
+            (true, true, true, false) => (Color::WHITE, Color::WHITE, Color::WHITE, Color::BLACK),
+            (false, false, true, true) => (Color::BLACK, Color::BLACK, Color::WHITE, Color::WHITE),
+            (true, false, false, true) => (Color::WHITE, Color::BLACK, Color::BLACK, Color::WHITE),
+            (true, true, false, false) => (Color::WHITE, Color::WHITE, Color::BLACK, Color::BLACK),
+            (false, true, true, false) => (Color::BLACK, Color::WHITE, Color::WHITE, Color::BLACK),
+            (false, true, false, true) => (Color::BLACK, Color::WHITE, Color::BLACK, Color::WHITE),
+            (true, false, true, false) => (Color::WHITE, Color::BLACK, Color::WHITE, Color::BLACK),
+            (false, false, false, true) => (Color::BLACK, Color::BLACK, Color::BLACK, Color::WHITE),
+            (true, false, false, false) => (Color::WHITE, Color::BLACK, Color::BLACK, Color::BLACK),
+            (false, true, false, false) => (Color::BLACK, Color::WHITE, Color::BLACK, Color::BLACK),
+            (false, false, true, false) => (Color::BLACK, Color::BLACK, Color::WHITE, Color::BLACK),
+            _ => (Color::BLACK, Color::BLACK, Color::BLACK, Color::BLACK),
         }
     }
 }
@@ -170,12 +170,18 @@ fn main() {
     // }
 
     // getting the size of each rectangle
-    let (subrec_x, subrec_y, rec_x, rec_y) = (
+    let (rec_x, rec_y, subrec_x, subrec_y) = (
         SCREEN_WIDTH / MAZESIZE_X as f32,
         SCREEN_HEIGHT / MAZESIZE_Y as f32,
         SCREEN_WIDTH / (MAZESIZE_X as f32 * 3.0),
         SCREEN_HEIGHT / (MAZESIZE_Y as f32 * 3.0),
     );
+    // TODO use this to create the rectangles,
+    // the subrec_*, is the 1/3 of the size
+    // * # *
+    // # # * = CCBB
+    // * * *
+    // each * and # is a sub pixel
 
     while !rl.window_should_close() {
         let dt = rl.get_frame_time();
@@ -183,10 +189,81 @@ fn main() {
         //Draw
         //start
         let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::BLACK);
+        d.clear_background(Color::WHITE);
 
         //ongoing
 
+        //draw the rectangles
+        for ii in 0..MAZESIZE_X as usize {
+            for jj in 0..MAZESIZE_Y as usize {
+                // top left
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32, 
+                    (rec_y * jj as f32) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    Color::BLACK);
+                
+                //top right
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 2.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 0.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    Color::BLACK);
+                
+                //bottom left
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 2.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 2.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    Color::BLACK);
+
+                //bottom right
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 0.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 2.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    Color::BLACK);
+                
+                let (color_left, color_up, color_right, color_down) = maze[ii][jj].get_color();
+                
+                // left
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 0.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 1.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    color_left);
+                
+                //top (up)
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 1.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 0.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    color_up);
+                
+                //right
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 2.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 1.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    color_right);
+
+                //bottom (down)
+                d.draw_rectangle(
+                    (rec_x * ii as f32) as i32 + (subrec_x * 1.0) as i32, 
+                    (rec_y * jj as f32) as i32 + (subrec_y * 2.0) as i32, 
+                    subrec_x as i32, 
+                    subrec_y as i32, 
+                    color_down);
+
+            }
+        }
         d.draw_fps(10, 10);
     }
 }
@@ -236,6 +313,7 @@ mod tests {
 }
 
 /* 
+    Works but need to change later:
     you lazy bastard you just called the funtion 2 more times rather then figuring out a good way to only do it again if you can
     id say have it return a bool
 */
