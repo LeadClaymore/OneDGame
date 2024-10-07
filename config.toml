@@ -1,0 +1,4 @@
+[config]
+width = 1000.0
+height = 1000.0
+fps = 60
