@@ -1,3 +1,4 @@
+#[allow(non_snake_case)]
 use raylib::prelude::*;
 
 /// This stores what the coords and the left (l), up (u), right (r), and down (d).
@@ -77,7 +78,7 @@ impl MazePiece {
     }
 
     // returns the number that would correspond to an tile
-    pub fn get_number(&self) -> u8 {
+    pub fn _get_number(&self) -> u8 {
         let mut ret_num: u8 = 0;
         if self.l { ret_num += 1 }
         if self.u { ret_num += 2 }

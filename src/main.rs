@@ -1,6 +1,7 @@
+#[allow(special_module_name)]
 use serde_derive::Deserialize;
 use std::fs;
-use std::process::exit;
+//use std::process::exit;
 use toml;
 use ffi::CloseWindow;
 use rand::Rng;
@@ -32,8 +33,11 @@ fn main() {
         Err(_) => {
             // Write `msg` to `stderr`.
             eprintln!("Could not read file `{}`", filename);
-            // Exit the program with exit code `1`.
-            exit(1);
+            // return with defaults
+            "[config]
+            width = 1000.0
+            height = 1000.0
+            fps = 60".to_string()
         }
     };
 
@@ -45,8 +49,8 @@ fn main() {
         Err(_) => {
             // Write `msg` to `stderr`.
             eprintln!("Unable to load data from `{}`", filename);
-            // Exit the program with exit code `1`.
-            exit(1);
+            // return defaults
+            Data {config: Config {width: 1000.0, height: 1000.0, fps: 60}}
         }
     };
     
